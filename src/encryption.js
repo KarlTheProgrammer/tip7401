@@ -30,36 +30,29 @@ async function generateReceiver2() {
 
 async function generateMaster() {
     var master_secret = window.crypto.getRandomValues(new Uint8Array(32));
-    document.getElementById('master_key').innerHTML = toHexString(master_secret);
+    var master_key = await sha256(master_secret);
+    document.getElementById('master_key').innerHTML = toHexString(master_key);
 }
 
 async function generateEncryptMessage() {
-    var key_data = toByteArray(document.getElementById('master_key').innerHTML);
-    var key = await window.crypto.subtle.digest(
-        {
-            name: "SHA-256",
-        },
-        key_data
-    );
-
+    var key = toByteArray(document.getElementById('master_key').innerHTML);
     var message = document.getElementById('message').value;
     var message_data = new TextEncoder().encode(message);
     var encrypted_message = await encrypt(key, message_data);
     document.getElementById('message_iv').innerHTML = toHexString(encrypted_message[0]);
-    document.getElementById('encrypted_message').innerHTML = toHexString(new Uint8Array(encrypted_message[1]));
+    document.getElementById('encrypted_message').innerHTML = toHexString(encrypted_message[1]);
 }
 
 async function encryptReceiver1() {
     var senderPriv = bsv.HDPrivateKey.fromString(document.getElementById('sender_priv').value).privateKey;
     var receiver1Pub = bsv.HDPublicKey.fromString(document.getElementById('receiver1_pub').value).publicKey;
     var key = await dhKey(senderPriv, receiver1Pub);
-    document.getElementById('sender_receiver1_ecdh').innerHTML = toHexString(new Uint8Array(key));
+    document.getElementById('sender_receiver1_ecdh').innerHTML = toHexString(key);
 
     var master_key = toByteArray(document.getElementById('master_key').innerHTML);
-
     var encrypted = await encrypt(key, master_key);
     document.getElementById('receiver1_IV').innerHTML = toHexString(encrypted[0]);
-    document.getElementById('receiver1_encrypted_key').innerHTML = toHexString(new Uint8Array(encrypted[1]));
+    document.getElementById('receiver1_encrypted_key').innerHTML = toHexString(encrypted[1]);
 }
 
 async function encryptReceiver2() {
@@ -72,7 +65,7 @@ async function encryptReceiver2() {
 
     var encrypted = await encrypt(key, master_key);
     document.getElementById('receiver2_IV').innerHTML = toHexString(encrypted[0]);
-    document.getElementById('receiver2_encrypted_key').innerHTML = toHexString(new Uint8Array(encrypted[1]));
+    document.getElementById('receiver2_encrypted_key').innerHTML = toHexString(encrypted[1]);
 }
 
 async function decryptReceiver1() {
@@ -83,17 +76,13 @@ async function decryptReceiver1() {
 
     var iv_master_key = toByteArray(document.getElementById('receiver1_IV').innerHTML);
     var encrypted_master_key = toByteArray(document.getElementById('receiver1_encrypted_key').innerHTML);
-    var decrypted_master_key = new Uint8Array(await decrypt(key, iv_master_key, encrypted_master_key))
+    var decrypted_master_key = await decrypt(key, iv_master_key, encrypted_master_key)
     document.getElementById('receiver1_key').innerHTML = toHexString(decrypted_master_key);
 
     var iv_message = toByteArray(document.getElementById('message_iv').innerHTML);
     var encrypted_message = toByteArray(document.getElementById('encrypted_message').innerHTML);
-    console.log(decrypted_master_key)
-    console.log(iv_message)
-    console.log(encrypted_message)
     var decrypted_message = await decrypt(decrypted_master_key, iv_message, encrypted_message)
-    console.log(new TextDecoder("utf-8").decode(decrypted_message))
-    // document.getElementById('receiver1_message').innerHTML = new TextDecoder("utf-8").decode(decrypted_message);
+    document.getElementById('receiver1_message').innerHTML = new TextDecoder("utf-8").decode(decrypted_message);
 }
 
 async function decryptReceiver2() {
@@ -107,21 +96,15 @@ async function decryptReceiver2() {
     var decrypted_master_key = await decrypt(key, iv_master_key, encrypted_master_key)
     document.getElementById('receiver2_key').innerHTML = toHexString(new Uint8Array(decrypted_master_key));
 
-
+    var iv_message = toByteArray(document.getElementById('message_iv').innerHTML);
+    var encrypted_message = toByteArray(document.getElementById('encrypted_message').innerHTML);
+    var decrypted_message = await decrypt(decrypted_master_key, iv_message, encrypted_message)
+    document.getElementById('receiver2_message').innerHTML = new TextDecoder("utf-8").decode(decrypted_message);
 }
 
 async function dhKey(privateKey, publicKey) {
-
     dh = publicKey.point.mul(privateKey.toBigNumber())
-
-    var key = await window.crypto.subtle.digest(
-        {
-            name: "SHA-256",
-        },
-        new Uint8Array(dh.getX().toBuffer())
-    );
-
-    return new Uint8Array(key);
+    return await sha256(new Uint8Array(dh.getX().toBuffer()));
 }
 
 async function encrypt(keyValue, data) {
@@ -146,7 +129,7 @@ async function encrypt(keyValue, data) {
         data //ArrayBuffer of data you want to encrypt
     );
 
-    return [iv, encrypted];
+    return [iv, new Uint8Array(encrypted)];
 }
 
 async function decrypt(keyValue, iv, data) {
@@ -169,7 +152,17 @@ async function decrypt(keyValue, iv, data) {
         data //ArrayBuffer of data you want to encrypt
     );
 
-    return decrypted;
+    return new Uint8Array(decrypted);
+}
+
+async function sha256(data) {
+    var hash = await window.crypto.subtle.digest(
+        {
+            name: "SHA-256",
+        },
+        data
+    );
+    return new Uint8Array(hash);
 }
 
 function toHexString(byteArray) {
