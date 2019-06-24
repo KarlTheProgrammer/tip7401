@@ -1,0 +1,63 @@
+<html>
+<head>
+<script type="text/javascript" src="src/encryption.js"></script>
+</head>
+<body>
+
+<script>
+run();
+</script>
+
+<p>
+Tokenized Encryption Proof of Concept.
+<ol>
+  <li>Generate 1 sender and 2 receiver key pairs.</li>
+  <li>Generate ECDH Keys between sender and each of the receivers.</li>
+  <li>Generate Master Key.</li>
+  <li>Encrypt the Master Key with each of the sender's ECDH Keys corresponding to each of the receivers.</li>
+  <li>Decrypt the encrypted Master Key with each of the reciever's ECDH Keys.</li>
+  <li>Encrypt a message with the master key.</li>
+  <li>Decrypt the message with each of the receiver's decrypted master keys.</li>
+</ol>
+</p>
+
+<div style="padding-bottom:10px">Sender
+    <div style="padding-left:20px">
+        <div>Private Key : <span id="sender_priv">Generating ...</span></div>
+        <div>Public Key :
+            <div style="padding-left:10px">x: <span id="sender_pub_x">Generating ...</span></div>
+            <div style="padding-left:10px">y: <span id="sender_pub_y">Generating ...</span></div>
+        </div>
+        <div>ECDH Secret 1 : <span id="sender_secret1">Generating ...</span></div>
+        <div>ECDH Secret 2 : <span id="sender_secret2">Generating ...</span></div>
+        <div>Master Key: <span id="master_key" style="background:yellow">Generating ...</span></div>
+        <div>Message: <span id="sender_message">Generating ...</span></div>
+    </div>
+</div>
+<div style="padding-bottom:10px">Receiver 1
+    <div style="padding-left:20px">
+        <div>Private Key : <span id="receiver1_priv">Generating ...</span></div>
+        <div>Public Key :
+            <div style="padding-left:10px">x: <span id="receiver1_pub_x">Generating ...</span></div>
+            <div style="padding-left:10px">y: <span id="receiver1_pub_y">Generating ...</span></div>
+        </div>
+        <div>ECDH Secret : <span id="receiver1_secret">Generating ...</span></div>
+        <div>Master Key: <span id="master_key1" style="background:yellow">Generating ...</span></div>
+        <div>Message: <span id="receiver1_message">Generating ...</span></div>
+    </div>
+</div>
+<div style="padding-bottom:10px">Receiver 2
+    <div style="padding-left:20px">
+        <div>Private Key : <span id="receiver2_priv">Generating ...</span></div>
+        <div>Public Key :
+            <div style="padding-left:10px">x: <span id="receiver2_pub_x">Generating ...</span></div>
+            <div style="padding-left:10px">y: <span id="receiver2_pub_y">Generating ...</span></div>
+        </div>
+        <div>ECDH Secret : <span id="receiver2_secret">Generating ...</span></div>
+        <div>Master Key: <span id="master_key2" style="background:yellow">Generating ...</span></div>
+        <div>Message: <span id="receiver2_message">Generating ...</span></div>
+    </div>
+</div>
+
+</body>
+</html>
