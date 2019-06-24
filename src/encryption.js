@@ -1,10 +1,10 @@
 
 
 async function generateAll() {
-    generateSender();
-    generateReceiver1();
-    generateReceiver2();
-    generateMaster();
+    await generateSender();
+    await generateReceiver1();
+    await generateReceiver2();
+    await generateMaster();
 }
 
 async function generateSender() {
@@ -39,7 +39,7 @@ async function generateEncryptMessage() {
         {
             name: "SHA-256",
         },
-        new Uint8Array(key_data)
+        key_data
     );
 
     var message = document.getElementById('message').value;
@@ -53,74 +53,75 @@ async function encryptReceiver1() {
     var senderPriv = bsv.HDPrivateKey.fromString(document.getElementById('sender_priv').value).privateKey;
     var receiver1Pub = bsv.HDPublicKey.fromString(document.getElementById('receiver1_pub').value).publicKey;
     var key = await dhKey(senderPriv, receiver1Pub);
-    document.getElementById('sender_receiver1_ecdh').innerHTML = toHexString(key);
+    document.getElementById('sender_receiver1_ecdh').innerHTML = toHexString(new Uint8Array(key));
 
     var master_key = toByteArray(document.getElementById('master_key').innerHTML);
 
     var encrypted = await encrypt(key, master_key);
     document.getElementById('receiver1_IV').innerHTML = toHexString(encrypted[0]);
-    document.getElementById('receiver1_encrypted_key').innerHTML = toHexString(encrypted[1]);
+    document.getElementById('receiver1_encrypted_key').innerHTML = toHexString(new Uint8Array(encrypted[1]));
+}
+
+async function encryptReceiver2() {
+    var senderPriv = bsv.HDPrivateKey.fromString(document.getElementById('sender_priv').value).privateKey;
+    var receiver2Pub = bsv.HDPublicKey.fromString(document.getElementById('receiver2_pub').value).publicKey;
+    var key = await dhKey(senderPriv, receiver2Pub);
+    document.getElementById('sender_receiver2_ecdh').innerHTML = toHexString(new Uint8Array(key));
+
+    var master_key = toByteArray(document.getElementById('master_key').innerHTML);
+
+    var encrypted = await encrypt(key, master_key);
+    document.getElementById('receiver2_IV').innerHTML = toHexString(encrypted[0]);
+    document.getElementById('receiver2_encrypted_key').innerHTML = toHexString(new Uint8Array(encrypted[1]));
+}
+
+async function decryptReceiver1() {
+    var senderPub = bsv.HDPublicKey.fromHDPrivateKey(bsv.HDPrivateKey.fromString(document.getElementById('sender_priv').value)).publicKey;
+    var receiver1Priv = bsv.HDPrivateKey.fromString(document.getElementById('receiver1_priv').value).privateKey;
+    var key = await dhKey(receiver1Priv, senderPub);
+    document.getElementById('receiver1_sender_ecdh').innerHTML = toHexString(key);
+
+    var iv_master_key = toByteArray(document.getElementById('receiver1_IV').innerHTML);
+    var encrypted_master_key = toByteArray(document.getElementById('receiver1_encrypted_key').innerHTML);
+    var decrypted_master_key = new Uint8Array(await decrypt(key, iv_master_key, encrypted_master_key))
+    document.getElementById('receiver1_key').innerHTML = toHexString(decrypted_master_key);
+
+    var iv_message = toByteArray(document.getElementById('message_iv').innerHTML);
+    var encrypted_message = toByteArray(document.getElementById('encrypted_message').innerHTML);
+    console.log(decrypted_master_key)
+    console.log(iv_message)
+    console.log(encrypted_message)
+    var decrypted_message = await decrypt(decrypted_master_key, iv_message, encrypted_message)
+    console.log(new TextDecoder("utf-8").decode(decrypted_message))
+    // document.getElementById('receiver1_message').innerHTML = new TextDecoder("utf-8").decode(decrypted_message);
+}
+
+async function decryptReceiver2() {
+    var senderPub = bsv.HDPublicKey.fromHDPrivateKey(bsv.HDPublicKey.fromString(document.getElementById('sender_priv').value)).publicKey;
+    var receiver2Priv = bsv.HDPrivateKey.fromString(document.getElementById('receiver2_priv').value).privateKey;
+    var key = await dhKey(receiver2Priv, senderPub);
+    document.getElementById('receiver2_sender_ecdh').innerHTML = toHexString(key);
+
+    var iv_master_key = toByteArray(document.getElementById('receiver2_IV').innerHTML);
+    var encrypted_master_key = toByteArray(document.getElementById('receiver2_encrypted_key').innerHTML);
+    var decrypted_master_key = await decrypt(key, iv_master_key, encrypted_master_key)
+    document.getElementById('receiver2_key').innerHTML = toHexString(new Uint8Array(decrypted_master_key));
+
+
 }
 
 async function dhKey(privateKey, publicKey) {
 
-    // Convert keys from ECDSA to ECDH
-    // var privdata = await window.crypto.subtle.exportKey("raw", privateKey);
-    var privBuffer = privateKey.toBuffer();
-    console.log("privBuffer")
-    console.log(privBuffer)
-    var der = new Uint8Array(privBuffer.length + 1)
-    // der[0] = 0 // Set first byte zero
-    // der.set(privBuffer, 1)
-    // console.log("der")
-    // console.log(der)
-    var privkey = await window.crypto.subtle.importKey(
-        "raw", privBuffer,
-        {   //these are the algorithm options
-            name: "ECDH",
-            namedCurve: "P-256", //can be "P-256", "P-384", or "P-521"
-        },
-        false, //whether the key is extractable (i.e. can be used in exportKey)
-        ["deriveKey", "deriveBits"] //"deriveKey" and/or "deriveBits" for private keys only (just put an empty list if importing a public key)
-    )
-    // console.log("privkey");
-    // console.log(privkey);
-
-    // var pubdata = await window.crypto.subtle.exportKey("spki", publicKey);
-    var pubkey = await window.crypto.subtle.importKey(
-        "spki", publicKey.toDER(),
-        {   //these are the algorithm options
-            name: "ECDH",
-            namedCurve: "P-256", //can be "P-256", "P-384", or "P-521"
-        },
-        false, //whether the key is extractable (i.e. can be used in exportKey)
-        [] //"deriveKey" and/or "deriveBits" for private keys only (just put an empty list if importing a public key)
-    )
-    // console.log("pubkey");
-    // console.log(pubkey);
-
-    var secret = await window.crypto.subtle.deriveBits(
-        {
-            name: "ECDH",
-            namedCurve: "P-256", //can be "P-256", "P-384", or "P-521"
-            public: pubkey, //an ECDH public key from generateKey or importKey
-        },
-        privkey, //your ECDH private key from generateKey or importKey
-        256 //the number of bits you want to derive
-    );
+    dh = publicKey.point.mul(privateKey.toBigNumber())
 
     var key = await window.crypto.subtle.digest(
         {
             name: "SHA-256",
         },
-        new Uint8Array(secret)
+        new Uint8Array(dh.getX().toBuffer())
     );
 
-    console.log("secret");
-    console.log(secret);
-    console.log("key");
-    console.log(key);
-    return key;
+    return new Uint8Array(key);
 }
 
 async function encrypt(keyValue, data) {
@@ -182,5 +183,5 @@ function toByteArray(hexString) {
   for (var i = 0; i < hexString.length; i += 2) {
     result.push(parseInt(hexString.substr(i, 2), 16));
   }
-  return result;
+  return new Uint8Array(result);
 }

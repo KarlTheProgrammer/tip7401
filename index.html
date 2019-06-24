@@ -48,7 +48,7 @@ Tokenized Encryption Proof of Concept.
         </table>
     </div>
 
-    <div style="padding-left:20px;padding-bottom:20px">Receiver 2 <input type="submit" name="encrypt_receiver2" value="Encrypt"/>
+    <div style="padding-left:20px;padding-bottom:20px">Receiver 2 <input type="submit" name="encrypt_receiver2" value="Encrypt" onclick="encryptReceiver2()"/>
         <table style="padding-left:20px">
             <tr><td>ECDH</td><td id="sender_receiver2_ecdh"></td></tr>
             <tr><td>IV</td><td id="receiver2_IV"></td></tr>
@@ -57,7 +57,7 @@ Tokenized Encryption Proof of Concept.
     </div>
 </div>
 
-<div style="padding-bottom:20px">Receiver 1 Information <input type="submit" name="decrypt_receiver1" value="Decrypt"/>
+<div style="padding-bottom:20px">Receiver 1 Information <input type="submit" name="decrypt_receiver1" value="Decrypt" onclick="decryptReceiver1()"/>
     <table style="padding-left:20px">
         <tr><td>Private Key</td><td><input type="text" id="receiver1_priv" size="80"/></td></tr>
         <tr><td>ECDH</td><td id="receiver1_sender_ecdh"></td></tr>
@@ -66,7 +66,7 @@ Tokenized Encryption Proof of Concept.
     </table>
 </div>
 
-<div style="padding-bottom:20px">Receiver 2 Information <input type="submit" name="decrypt_receiver2" value="Decrypt"/>
+<div style="padding-bottom:20px">Receiver 2 Information <input type="submit" name="decrypt_receiver2" value="Decrypt" onclick="decryptReceiver2()"/>
     <table style="padding-left:20px">
         <tr><td>Private Key</td><td><input type="text" id="receiver2_priv" size="80"/></td></tr>
         <tr><td>ECDH</td><td id="receiver2_sender_ecdh"></td></tr>
