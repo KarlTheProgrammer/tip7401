@@ -1,62 +1,78 @@
 <html>
 <head>
 <script type="text/javascript" src="src/encryption.js"></script>
+<script type="text/javascript" src="https://unpkg.com/bsv@0.26.4/bsv.min.js"></script>
 </head>
 <body>
 
 <script>
-run();
 </script>
 
 <p>
 Tokenized Encryption Proof of Concept.
 <ol>
   <li>Generate 1 sender and 2 receiver key pairs.</li>
-  <li>Generate ECDH Keys between sender and each of the receivers.</li>
   <li>Generate Master Key.</li>
+  <li>Encrypt a message with the master key.</li>
+  <li>Generate ECDH Keys between sender and each of the receivers.</li>
   <li>Encrypt the Master Key with each of the sender's ECDH Keys corresponding to each of the receivers.</li>
   <li>Decrypt the encrypted Master Key with each of the reciever's ECDH Keys.</li>
-  <li>Encrypt a message with the master key.</li>
   <li>Decrypt the message with each of the receiver's decrypted master keys.</li>
 </ol>
 </p>
 
-<div style="padding-bottom:10px">Sender
-    <div style="padding-left:20px">
-        <div>Private Key : <span id="sender_priv">Generating ...</span></div>
-        <div>Public Key :
-            <div style="padding-left:10px">x: <span id="sender_pub_x">Generating ...</span></div>
-            <div style="padding-left:10px">y: <span id="sender_pub_y">Generating ...</span></div>
-        </div>
-        <div>ECDH Secret 1 : <span id="sender_secret1">Generating ...</span></div>
-        <div>ECDH Secret 2 : <span id="sender_secret2">Generating ...</span></div>
-        <div>Master Key: <span id="master_key" style="background:yellow">Generating ...</span></div>
-        <div>Message: <span id="sender_message">Generating ...</span></div>
+<div style="padding-bottom:20px">Initial Information
+    <table style="padding-left:20px">
+        <tr><td>Sender Private Key</td><td><input type="text" id="sender_priv" size="80"/></td><td><input type="submit" name="gen_sender" value="Generate" onclick="generateSender()"/></td></tr>
+        <tr><td>Receiver 1 Public Key</td><td><input type="text" id="receiver1_pub" size="80"/></td><td><input type="submit" name="gen_receiver1" value="Generate" onclick="generateReceiver1()"/></td></tr>
+        <tr><td>Receiver 2 Public Key</td><td><input type="text" id="receiver2_pub" size="80"/></td><td><input type="submit" name="gen_receiver2" value="Generate" onclick="generateReceiver2()"/></td></tr>
+    </table>
+</div>
+
+<div style="padding-bottom:20px">Secret Information
+    <table style="padding-left:20px">
+        <tr><td>Master Key</td><td id="master_key"></td><td><input type="submit" name="gen_master" value="Generate" onclick="generateMaster()"/></td></tr>
+        <tr><td>Message</td><td><input type="text" id="message" size="60" value="Shh! Don't let them see this." /></td><td>&nbsp;</td></tr>
+    </table>
+</div>
+
+<div style="padding-bottom:20px">Encrypted Information <input type="submit" name="encrypt" value="Encrypt" onclick="generateEncryptMessage()"/>
+    <div style="padding-left:20px;padding-top:10px">IV<span id="message_iv" style="padding-left:10px"></span></div>
+    <div style="padding-left:20px;padding-bottom:20px">Message<span id="encrypted_message" style="padding-left:10px"></span></div>
+
+    <div style="padding-left:20px;padding-bottom:20px">Receiver 1 <input type="submit" name="encrypt_receiver1" value="Encrypt" onclick="encryptReceiver1()"/>
+        <table style="padding-left:20px">
+            <tr><td>ECDH</td><td id="sender_receiver1_ecdh"></td></tr>
+            <tr><td>IV</td><td id="receiver1_IV"></td></tr>
+            <tr><td>Encrypted Key</td><td id="receiver1_encrypted_key"></td></tr>
+        </table>
+    </div>
+
+    <div style="padding-left:20px;padding-bottom:20px">Receiver 2 <input type="submit" name="encrypt_receiver2" value="Encrypt"/>
+        <table style="padding-left:20px">
+            <tr><td>ECDH</td><td id="sender_receiver2_ecdh"></td></tr>
+            <tr><td>IV</td><td id="receiver2_IV"></td></tr>
+            <tr><td>Encrypted Key</td><td id="receiver2_encrypted_key"></td></tr>
+        </table>
     </div>
 </div>
-<div style="padding-bottom:10px">Receiver 1
-    <div style="padding-left:20px">
-        <div>Private Key : <span id="receiver1_priv">Generating ...</span></div>
-        <div>Public Key :
-            <div style="padding-left:10px">x: <span id="receiver1_pub_x">Generating ...</span></div>
-            <div style="padding-left:10px">y: <span id="receiver1_pub_y">Generating ...</span></div>
-        </div>
-        <div>ECDH Secret : <span id="receiver1_secret">Generating ...</span></div>
-        <div>Master Key: <span id="master_key1" style="background:yellow">Generating ...</span></div>
-        <div>Message: <span id="receiver1_message">Generating ...</span></div>
-    </div>
+
+<div style="padding-bottom:20px">Receiver 1 Information <input type="submit" name="decrypt_receiver1" value="Decrypt"/>
+    <table style="padding-left:20px">
+        <tr><td>Private Key</td><td><input type="text" id="receiver1_priv" size="80"/></td></tr>
+        <tr><td>ECDH</td><td id="receiver1_sender_ecdh"></td></tr>
+        <tr><td>Key</td><td id="receiver1_key"></td></tr>
+        <tr><td>Message</td><td id="receiver1_message"></td></tr>
+    </table>
 </div>
-<div style="padding-bottom:10px">Receiver 2
-    <div style="padding-left:20px">
-        <div>Private Key : <span id="receiver2_priv">Generating ...</span></div>
-        <div>Public Key :
-            <div style="padding-left:10px">x: <span id="receiver2_pub_x">Generating ...</span></div>
-            <div style="padding-left:10px">y: <span id="receiver2_pub_y">Generating ...</span></div>
-        </div>
-        <div>ECDH Secret : <span id="receiver2_secret">Generating ...</span></div>
-        <div>Master Key: <span id="master_key2" style="background:yellow">Generating ...</span></div>
-        <div>Message: <span id="receiver2_message">Generating ...</span></div>
-    </div>
+
+<div style="padding-bottom:20px">Receiver 2 Information <input type="submit" name="decrypt_receiver2" value="Decrypt"/>
+    <table style="padding-left:20px">
+        <tr><td>Private Key</td><td><input type="text" id="receiver2_priv" size="80"/></td></tr>
+        <tr><td>ECDH</td><td id="receiver2_sender_ecdh"></td></tr>
+        <tr><td>Key</td><td id="receiver2_key"></td></tr>
+        <tr><td>Message</td><td id="receiver2_message"></td></tr>
+    </table>
 </div>
 
 </body>
